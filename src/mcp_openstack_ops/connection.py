@@ -139,17 +139,17 @@ def reset_connection_cache():
 # =============================================================================
 # PROJECT ISOLATION SECURITY FUNCTIONS
 # =============================================================================
-
+"""
 def get_current_project_id() -> str:
-    """
-    Get the current project ID from the authenticated connection.
-    
-    Returns:
-        str: Current project ID
-        
-    Raises:
-        Exception: If unable to get project ID
-    """
+    #
+    #Get the current project ID from the authenticated connection.
+    #
+    #Returns:
+    #    str: Current project ID
+    #
+    #Raises:
+    #    Exception: If unable to get project ID
+    #
     try:
         conn = get_openstack_connection()
         # Get project ID from the token
@@ -173,7 +173,29 @@ def get_current_project_id() -> str:
     except Exception as e:
         logger.error(f"Failed to get current project ID: {e}")
         raise
+"""
+# 2026-03-11 Patch: Avoid triggering identity:list_projects due to project_id becoming None
 
+def get_current_project_id() -> str:
+    """
+    Get the current project ID from the authenticated token.
+    """
+    try:
+        conn = get_openstack_connection()
+
+        # Extract project directly from token
+        auth_ref = conn.session.auth.get_auth_ref(conn.session)
+        project_id = auth_ref.project_id
+
+        if not project_id:
+            raise Exception("Token is not project scoped")
+
+        logger.debug(f"Current project ID: {project_id}")
+        return project_id
+
+    except Exception as e:
+        logger.error(f"Failed to get current project ID: {e}")
+        raise
 
 def validate_resource_ownership(resource: Any, resource_type: str = "resource") -> bool:
     """
