@@ -91,7 +91,7 @@ def get_openstack_connection():
     try:
         logger.info(f"Creating OpenStack connection with protocol: {os_auth_protocol}, host: {os_auth_host}")
         _connection_cache = connection.Connection(
-            auth_url=f"{os_auth_protocol}://{os_auth_host}:{os_auth_port}",
+            auth_url=os.environ.get("OS_AUTH_URL"),
             verify=verify_ssl,
             project_name=os.environ.get("OS_PROJECT_NAME"),
             username=os.environ.get("OS_USERNAME"),
@@ -100,18 +100,9 @@ def get_openstack_connection():
             project_domain_name=os.environ.get("OS_PROJECT_DOMAIN_NAME", "Default"),
             region_name=os.environ.get("OS_REGION_NAME", "RegionOne"),
             identity_api_version=os.environ.get("OS_IDENTITY_API_VERSION", "3"),
-            interface="internal",
-            # Override all service endpoints to use configured protocol
-            identity_endpoint=f"{os_auth_protocol}://{os_auth_host}:{os_auth_port}",
-            compute_endpoint=f"{os_auth_protocol}://{os_auth_host}:{compute_port}/v2.1",
-            network_endpoint=f"{os_auth_protocol}://{os_auth_host}:{network_port}",
-            volume_endpoint=f"{os_auth_protocol}://{os_auth_host}:{volume_port}/v3",
-            image_endpoint=f"{os_auth_protocol}://{os_auth_host}:{image_port}",
-            placement_endpoint=f"{os_auth_protocol}://{os_auth_host}:{placement_port}",
-            orchestration_endpoint=f"{os_auth_protocol}://{os_auth_host}:{heat_stack_port}/v1",
-            timeout=10
+            interface=os.environ.get("OS_INTERFACE", "public"),
+            timeout=10,
         )
-        
         # Test the connection
         try:
             token = _connection_cache.identity.get_token()
